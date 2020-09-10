@@ -7,6 +7,7 @@ function grid(x, y, step, alive) {
         }
     }
 
+
     let visited = []
     for (let i = 0; i < alive; i++) {
         let index = Math.floor(Math.random() * coordinates.length), flag = false
@@ -61,6 +62,7 @@ class Node {
                     curr_state = coords[i].getPrevState()
 
                 }
+
             }
 
             // coords[i].getPrevState()
@@ -69,27 +71,36 @@ class Node {
                 if (current_x === xup && current_y === y) {
                     alive += 1
                 }
+
                 else if (current_x === xdown && current_y === y) {
+
                     alive += 1
+
                 }
                 else if (current_x === x && current_y === yup) {
                     alive += 1
+
                 }
                 else if (current_x === x && current_y === ydown) {
                     alive += 1
+
                 }
                 else if (current_x === xup && current_y === yup) {
                     alive += 1
+
                 }
                 else if (current_x === xdown && current_y === ydown) {
                     alive += 1
+
                 }
                 else if (current_x === xup && current_y === ydown) {
                     alive += 1
+
                 }
                 else if (current_x=== xdown && current_y === yup) {
                     alive += 1
                 }
+
             }
         }
 
@@ -110,34 +121,119 @@ class Node {
     getPrevState () {
         return this.prevState
     }
+
+    setCurrentState (val) {
+
+        this.state = val
+
+    }
+
 }
 
+
 let step = 10
-let coordinates = grid(500, 500, step, 200)
+let coordinates = grid(500, 500, step, 0)
 
 for (let i = 0; i < coordinates.length; i++) {
     coordinates[i] = new Node(coordinates[i])
 }
 
+
+let start = false
+
+function mousePressed() {
+
+    if (start) {
+
+        return
+    }
+
+    for (let i = 0; i < coordinates.length; i++) {
+
+        if (mouseX > coordinates[i].getCoordinates()[0] &&
+            mouseX < coordinates[i].getCoordinates()[0] + step &&
+            mouseY > coordinates[i].getCoordinates()[1] &&
+            mouseY < coordinates[i].getCoordinates()[1] + step) {
+
+            if (coordinates[i].getCoordinates()[2] === 1) {
+                coordinates[i].setCurrentState(0)
+            } else {
+                coordinates[i].setCurrentState(1)
+            }
+
+        }
+
+    }
+
+
+}
+
+
 function setup() {
     createCanvas(500, 500);
-    frameRate(60)
+
+    button = createButton("start");
+    button.position(50, 50)
+    button.mousePressed(() => {
+        start = true
+    });
+
+    button = createButton("random start");
+    button.position(100, 50)
+    button.mousePressed(() => {
+
+        coordinates = grid(500, 500, step, Math.floor(Math.random() * coordinates.length))
+        for (let i = 0; i < coordinates.length; i++) {
+            coordinates[i] = new Node(coordinates[i])
+        }
+
+        start = true
+    });
+
 }
+
 
 function draw() {
 
-    for (let j = 0;  j < coordinates.length; j++){
+    if (!start) {
 
-        let curr = coordinates[j]
-        let curr_coordinates = curr.getCoordinates()
 
-        if (curr.getCoordinates()[2] === 1) {
-            fill("white")
-            rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
-        } else {
-            fill("black")
-            rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
+        for (let j = 0;  j < coordinates.length; j++){
+
+            let curr = coordinates[j]
+            let curr_coordinates = curr.getCoordinates()
+
+            if (curr.getCoordinates()[2] === 1) {
+
+                fill("white")
+                rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
+
+            } else {
+                fill("black")
+                rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
+            }
+
         }
-        curr.currentState(coordinates, step, j)
+
+    } else {
+        for (let j = 0; j < coordinates.length; j++) {
+
+            let curr = coordinates[j]
+            let curr_coordinates = curr.getCoordinates()
+
+            if (curr.getCoordinates()[2] === 1) {
+
+                fill("white")
+                rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
+
+            } else {
+                fill("black")
+                rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
+            }
+
+            curr.currentState(coordinates, step, j)
+        }
+
     }
+
 }
