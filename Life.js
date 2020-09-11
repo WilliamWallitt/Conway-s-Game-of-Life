@@ -1,23 +1,23 @@
 function grid(x, y, step, alive) {
 
     let coordinates = []
-    for (let i = 0; i < x; i+=step) {
-        for(let j = 0; j < y; j+=step) {
+    for (let i = 0; i < x; i += step) {
+        for (let j = 0; j < y; j += step) {
             coordinates.push([i, j, 0])
         }
     }
 
-
     let visited = []
     for (let i = 0; i < alive; i++) {
-        let index = Math.floor(Math.random() * coordinates.length), flag = false
+        let index = Math.floor(Math.random() * coordinates.length),
+            flag = false
         for (let j = 0; j < visited.length; j++) {
             if (index === visited[j]) {
                 flag = true
             }
         }
         if (flag) {
-            alive ++
+            alive++
         } else {
             coordinates[Math.floor(Math.random() * coordinates.length)][2] = 1
             flag = false
@@ -29,22 +29,24 @@ function grid(x, y, step, alive) {
 
 class Node {
 
-    constructor(coordinate) {
+    constructor(coordinate, index) {
         this.coordinate = coordinate
         this.state = coordinate[2]
         this.prevState = null
+        this.index = index
     }
 
-    currentState (coords, step, index) {
+    getNeighbours (coords, step) {
 
         this.prevState = this.state
+        let x = this.coordinate[0],
+            y = this.coordinate[1]
+        let xup = x + step,
+            xdown = x - step
+        let yup = y + step,
+            ydown = y - step
 
-        let state = this.coordinate[2]
-        let x = this.coordinate[0], y = this.coordinate[1]
-        let xup = x + step, xdown = x - step
-        let yup = y + step, ydown = y - step
-        let alive = 0
-
+        let neighbours = []
 
         for (let i = 0; i < coords.length; i++) {
 
@@ -52,57 +54,56 @@ class Node {
             let current_y = coords[i].getCoordinates()[1]
             let curr_state = coords[i].getCoordinates()[2]
 
-            // basically prev nodes have been already updated
-            // we need to use the prev state's value
+            if (current_x === xup && current_y === y) {
+                neighbours.push(coords[i])
+            } else if (current_x === xdown && current_y === y) {
+                neighbours.push(coords[i])
+            } else if (current_x === x && current_y === yup) {
+                neighbours.push(coords[i])
 
-            if (i < index) {
-                if (coords[i].getPrevState() === null) {
-                    curr_state = coords[i].getCoordinates()[2]
-                } else {
-                    curr_state = coords[i].getPrevState()
+            } else if (current_x === x && current_y === ydown) {
+                neighbours.push(coords[i])
 
-                }
+            } else if (current_x === xup && current_y === yup) {
+                neighbours.push(coords[i])
 
+            } else if (current_x === xdown && current_y === ydown) {
+                neighbours.push(coords[i])
+
+            } else if (current_x === xup && current_y === ydown) {
+                neighbours.push(coords[i])
+
+            } else if (current_x === xdown && current_y === yup) {
+                neighbours.push(coords[i])
             }
 
-            // coords[i].getPrevState()
-            if (curr_state === 1) {
+        }
 
-                if (current_x === xup && current_y === y) {
-                    alive += 1
-                }
+        this.neighbours = neighbours
 
-                else if (current_x === xdown && current_y === y) {
 
-                    alive += 1
+    }
 
-                }
-                else if (current_x === x && current_y === yup) {
-                    alive += 1
 
-                }
-                else if (current_x === x && current_y === ydown) {
-                    alive += 1
+    getIndex () {
+        return this.index
+    }
 
-                }
-                else if (current_x === xup && current_y === yup) {
-                    alive += 1
+    currentState(index) {
 
-                }
-                else if (current_x === xdown && current_y === ydown) {
-                    alive += 1
+        let alive = 0, state = this.state
 
-                }
-                else if (current_x === xup && current_y === ydown) {
-                    alive += 1
-
-                }
-                else if (current_x=== xdown && current_y === yup) {
-                    alive += 1
-                }
-
+        for (let i = 0; i < this.neighbours.length; i++) {
+            let current_neighbour = this.neighbours[i]
+            let current_index = current_neighbour.getIndex()
+            if (current_index < index) {
+                alive += current_neighbour.getPrevState() === null ? current_neighbour.getCoordinates()[2] : current_neighbour.getPrevState()
+            } else {
+                alive += current_neighbour.getCoordinates()[2]
             }
         }
+
+        this.prevState = this.state
 
         if (state === 0 && alive === 3) {
             this.state = 1
@@ -111,31 +112,30 @@ class Node {
         } else if (state === 1 && (alive === 2 || alive === 3)) {
             this.state = 1
         }
+
     }
 
-    getCoordinates () {
+    getCoordinates() {
         this.coordinate[2] = this.state
         return this.coordinate
     }
 
-    getPrevState () {
+    getPrevState() {
         return this.prevState
     }
-
-    setCurrentState (val) {
-
-        this.state = val
-
-    }
-
 }
 
 
-let step = 10
+let step = 20
 let coordinates = grid(500, 500, step, 0)
 
 for (let i = 0; i < coordinates.length; i++) {
-    coordinates[i] = new Node(coordinates[i])
+    coordinates[i] = new Node(coordinates[i], i)
+}
+
+
+for (let i = 0; i < coordinates.length; i++) {
+    coordinates[i].getNeighbours(coordinates, step)
 }
 
 
@@ -156,84 +156,93 @@ function mousePressed() {
             mouseY < coordinates[i].getCoordinates()[1] + step) {
 
             if (coordinates[i].getCoordinates()[2] === 1) {
-                coordinates[i].setCurrentState(0)
+                coordinates[i].state = 0
             } else {
-                coordinates[i].setCurrentState(1)
+                coordinates[i].state = 1
             }
 
         }
 
     }
 
-
 }
 
 
 function setup() {
+
     createCanvas(500, 500);
 
     button = createButton("start");
-    button.position(50, 50)
+    button.position(0, 510)
     button.mousePressed(() => {
         start = true
     });
 
     button = createButton("random start");
-    button.position(100, 50)
+    button.position(50, 510)
     button.mousePressed(() => {
-
         coordinates = grid(500, 500, step, Math.floor(Math.random() * coordinates.length))
         for (let i = 0; i < coordinates.length; i++) {
-            coordinates[i] = new Node(coordinates[i])
+            coordinates[i] = new Node(coordinates[i], i)
+        }
+
+        for (let i = 0; i < coordinates.length; i++) {
+            coordinates[i].getNeighbours(coordinates, step)
         }
 
         start = true
     });
+
+    button = createButton("reset");
+    button.position(150, 510)
+    button.mousePressed(() => {
+
+        coordinates = grid(500, 500, step, 0)
+
+        for (let i = 0; i < coordinates.length; i++) {
+            coordinates[i] = new Node(coordinates[i], i)
+        }
+
+        for (let i = 0; i < coordinates.length; i++) {
+            coordinates[i].getNeighbours(coordinates, step)
+        }
+
+        start = false
+    });
+
+
 
 }
 
 
 function draw() {
 
-    if (!start) {
+    for (let j = 0; j < coordinates.length; j++) {
 
+        let curr = coordinates[j]
+        let curr_coordinates = curr.getCoordinates()
 
-        for (let j = 0;  j < coordinates.length; j++){
+        if (curr.getCoordinates()[2] === 1) {
 
-            let curr = coordinates[j]
-            let curr_coordinates = curr.getCoordinates()
+            fill("white")
+            stroke("black")
+            rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
 
-            if (curr.getCoordinates()[2] === 1) {
+        } else {
 
-                fill("white")
-                rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
-
-            } else {
-                fill("black")
-                rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
+            fill("black")
+            if (!start) {
+                stroke("white")
+                strokeWeight(1)
             }
-
+            rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
         }
 
-    } else {
-        for (let j = 0; j < coordinates.length; j++) {
+        if (start) {
 
-            let curr = coordinates[j]
-            let curr_coordinates = curr.getCoordinates()
+            curr.currentState(j)
 
-            if (curr.getCoordinates()[2] === 1) {
-
-                fill("white")
-                rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
-
-            } else {
-                fill("black")
-                rect(curr_coordinates[0], curr_coordinates[1], curr_coordinates[0] + step, curr_coordinates[1] + step)
-            }
-
-            curr.currentState(coordinates, step, j)
         }
 
     }
-
 }
